@@ -123,9 +123,9 @@ Note: Avoid using `docker compose down -v` when you want to preserve database da
 
 ## Project Links
 
-- **GitHub Repository:** This repository
-- **Demo Video:** To be added after publication.
-- **Project Article:** To be added after publication.
+- **GitHub Repository:** https://github.com/zahraayha/AU-Chat-Generator
+- **Medium Article:** https://medium.com/@zahraayha06/au-chat-generator-bikin-fake-chat-untuk-cerita-au-jadi-lebih-gampang-1cca41b92666
+- **YouTube Demo:** https://youtu.be/tk2fuo8YWvE
 
 ## AI Usage Declaration
 
