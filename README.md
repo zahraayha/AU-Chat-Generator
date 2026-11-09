@@ -70,7 +70,7 @@ All services run in Docker containers connected through a user-defined bridge ne
 Clone the repository:
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/zahraayha/AU-Chat-Generator.git
 cd AU-Chat-Generator
 ```
 
