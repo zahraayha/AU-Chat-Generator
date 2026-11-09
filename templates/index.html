@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AU Chat Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+:root{--bg:#f2f2f4;--panel:#fff;--card:#f5f5f7;--line:#e2e2e6;--tx:#17171a;--mu:#7a7a85;--ac:#0b84fe;--dl:#ff6a2b;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#101011;--panel:#1a1a1c;--card:#242427;--line:#333338;--tx:#f2f2f4;--mu:#9a9aa5}}
+:root[data-theme="dark"]{--bg:#101011;--panel:#1a1a1c;--card:#242427;--line:#333338;--tx:#f2f2f4;--mu:#9a9aa5}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--tx);font:14px/1.4 Inter,-apple-system,"SF Pro Text",system-ui,sans-serif}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+.app{display:grid;grid-template-columns:minmax(430px,1fr) minmax(400px,560px);height:100%}
+.left{overflow:auto;display:flex;flex-direction:column;align-items:center;padding:28px 16px 40px}
+.right{overflow:auto;padding:24px;background:var(--panel);border-left:1px solid var(--line)}
+@media (max-width:900px){.app{display:block;height:auto}.left,.right{overflow:visible}.right{border-left:0;border-top:1px solid var(--line)}}
+
+/* ---------- iOS Messages preview ---------- */
+.frame{border-radius:46px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.28),0 0 0 1px rgba(0,0,0,.08);flex:none}
+#phone{width:390px;min-height:844px;background:#fff;color:#000;display:flex;flex-direction:column;font-family:-apple-system,"SF Pro Text",Inter,system-ui,sans-serif}
+.sb{height:54px;padding:18px 30px 0 36px;display:flex;justify-content:space-between;align-items:center;font-weight:600;font-size:16px}
+.sb .ic{display:flex;gap:6px;align-items:center}
+.hd{position:relative;height:96px;background:#f7f7f8;border-bottom:1px solid #e3e3e6;display:flex;flex-direction:column;align-items:center;padding-top:2px}
+.hd .circ{position:absolute;top:12px;width:34px;height:34px;border-radius:50%;background:#e9e9ed;display:flex;align-items:center;justify-content:center}
+.hd .back{left:14px}.hd .vid{right:14px}
+.av{width:52px;height:52px;border-radius:50%;background:linear-gradient(#a3a7b3,#868b99) center/cover;color:#fff;font-weight:600;font-size:24px;display:flex;align-items:center;justify-content:center}
+.hd .nm{font-size:12px;margin-top:5px;color:#111}.hd .nm i{color:#9a9aa0;font-style:normal;margin-left:3px}
+#chat{flex:1;padding:12px 14px 16px}
+.stamp{text-align:center;font-size:12px;color:#8a8a8e;margin:14px 0 10px}.stamp b{font-weight:600}
+.row{display:flex;position:relative}.row.sent{justify-content:flex-end}
+.b{position:relative;max-width:76%;padding:7px 13px;border-radius:19px;font-size:17px;line-height:22px;white-space:pre-wrap;word-wrap:break-word;letter-spacing:-.2px}
+.recv .b{background:#e9e9eb;color:#000}.sent .b{background:#0b84fe;color:#fff}
+.b.tail::before,.b.tail::after{content:"";position:absolute;bottom:0}
+.sent .b.tail::before{right:-7px;width:20px;height:19px;background:#0b84fe;border-bottom-left-radius:16px 14px}
+.sent .b.tail::after{right:-26px;width:26px;height:19px;background:#fff;border-bottom-left-radius:10px}
+.recv .b.tail::before{left:-7px;width:20px;height:19px;background:#e9e9eb;border-bottom-right-radius:16px 14px}
+.recv .b.tail::after{left:-26px;width:26px;height:19px;background:#fff;border-bottom-right-radius:10px}
+.rx{position:absolute;top:-15px;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;border:2px solid #fff;z-index:2}
+.recv .rx{right:-12px;background:#0b84fe}.sent .rx{left:-12px;background:#e9e9eb}
+.dlv{text-align:right;font-size:11px;color:#8a8a8e;margin:3px 4px 0 0;font-weight:500}
+.pic{position:relative;display:block;max-width:76%}.pic img{display:block;border-radius:18px}
+.pic.empty{width:200px;height:150px;border-radius:18px;background:#e9e9eb;color:#8a8a8e;font-size:13px;display:flex;align-items:center;justify-content:center}
+.inp{display:flex;align-items:center;gap:8px;padding:8px 12px 6px}
+.inp .plus{width:34px;height:34px;border-radius:50%;background:#e9e9ed;display:flex;align-items:center;justify-content:center;flex:none}
+.inp .fld{flex:1;height:36px;border:1px solid #d6d6da;border-radius:18px;padding:0 12px;display:flex;align-items:center;justify-content:space-between;color:#a0a0a5;font-size:16px}
+.home{height:30px;display:flex;justify-content:center;align-items:flex-end;padding-bottom:8px}.home i{width:138px;height:5px;border-radius:3px;background:#000}
+
+/* ---------- Editor ---------- */
+.btn-dl{margin-top:22px;border:0;border-radius:999px;padding:13px 26px;background:var(--dl);color:#fff;font:600 15px Inter,sans-serif;cursor:pointer;box-shadow:0 6px 18px rgba(255,106,43,.35)}
+.btn-dl:disabled{opacity:.6;cursor:progress}
+.hint{color:var(--mu);font-size:12px;margin-top:10px;text-align:center;max-width:360px}
+h2{font-size:12px;font-weight:600;color:var(--mu);margin:22px 0 8px}h2:first-child{margin-top:0}
+.card{background:var(--card);border-radius:14px;padding:12px;margin-bottom:10px}
+label.f{display:block;font-size:12px;color:var(--mu);margin-bottom:4px}
+input[type=text],input[type=time],input[type=date],textarea{width:100%;background:var(--panel);border:1px solid var(--line);color:var(--tx);border-radius:9px;padding:8px 10px;font:inherit}
+textarea{resize:vertical;min-height:54px}
+input:focus,textarea:focus,button:focus-visible{outline:2px solid var(--ac);outline-offset:1px}
+.line{display:flex;gap:10px;align-items:center}.line>*{flex:1}.line>.fit{flex:none}
+.seg{display:flex;background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:2px}
+.seg button{flex:1;border:0;background:none;color:var(--mu);padding:6px 8px;border-radius:7px;font:500 13px Inter,sans-serif;cursor:pointer}
+.seg button.on{background:var(--ac);color:#fff}
+.sm{border:1px solid var(--line);background:var(--panel);color:var(--tx);border-radius:8px;padding:6px 10px;font:500 12px Inter,sans-serif;cursor:pointer}
+.sm:disabled{opacity:.35;cursor:default}.sm.del:hover{color:#ff453a}
+.mh{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:8px}
+.mh .seg{width:170px}.mh input{width:104px}.mh .sp{flex:1}
+.mh .ix{color:var(--mu);font-size:12px;width:18px}
+.rxs{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.rxs button{width:36px;height:34px;border-radius:9px;border:1px solid var(--line);background:var(--panel);font-size:17px;cursor:pointer}
+.rxs button.on{border-color:var(--ac);background:color-mix(in srgb,var(--ac) 18%,var(--panel))}
+.add{display:flex;gap:10px;margin-top:10px}.add .p{background:transparent;color:var(--tx);border:1px dashed var(--mu)}
+.imgf{display:flex;gap:12px;align-items:center}.imgf .th{width:72px;height:72px;border-radius:10px;overflow:hidden;background:var(--panel);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--mu);flex:none}.imgf .th img{width:100%;height:100%;object-fit:cover}.imgf .info{flex:1;min-width:0}.iname{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.imeta{font-size:12px;color:var(--mu);margin-bottom:8px}.ibtn{display:flex;gap:8px}
+.saved-list{display:flex;flex-direction:column;gap:8px}.saved-item{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px}.saved-item .meta{min-width:0;flex:1}.saved-item .meta strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.saved-item .meta small{color:var(--mu)}.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:#222;color:#fff;padding:10px 16px;border-radius:12px;font-size:13px;opacity:0;transition:opacity .2s;z-index:10;max-width:90%}.add button{flex:1;padding:12px;border-radius:12px;border:0;font:600 14px Inter,sans-serif;cursor:pointer}
+.add .r{background:var(--card);color:var(--tx)}.add .s{background:var(--ac);color:#fff}
+.chk{display:flex;gap:8px;align-items:center;margin-top:10px;font-size:13px}
+.avrow{display:flex;gap:12px;align-items:center}.avrow .av{width:48px;height:48px;font-size:21px}
+</style>
+</head>
+<body>
+<div class="app">
+  <main class="left">
+    <div class="frame"><div id="phone"></div></div>
+    <button class="btn-dl" id="dl">Download PNG</button>
+    <p class="hint">Hasil PNG hanya berisi tampilan chat (3x resolusi). Kalau pesannya banyak, gambar otomatis memanjang.</p>
+  </main>
+  <aside class="right" id="editor"></aside>
+</div>
+
+<script>
+/* ---------- State tunggal: editor dan preview membaca objek yang sama ---------- */
+const pad = n => String(n).padStart(2, '0');
+const ymd = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+let uid = 0;
+/* Struktur pesan (satu array untuk teks + foto, siap dipetakan ke Flask/PostgreSQL):
+   { id, type:'recv'|'sent', kind:'text'|'image', text, time:'HH:MM', reaction:null|key,
+     image: null | { src, name, mime, size, width, height } }   // src = data URL lokal; nanti ganti URL file dari server */
+const mk = (type, text, time, reaction = null) => ({ id: ++uid, type, kind: 'text', text, time, reaction, image: null });
+const mkImg = (type, time) => ({ id: ++uid, type, kind: 'image', text: '', time, reaction: null, image: null });
+const IMG_OK = ['image/jpeg', 'image/png', 'image/webp'], IMG_MAX = 8 * 1024 * 1024, IMG_SIDE = 1600;
+let toastTimer;
+function toast(msg) {
+  let t = document.getElementById('toast');
+  if (!t) { t = h('div', 'toast', null, { id: 'toast', role: 'status' }); document.body.append(t); }
+  t.textContent = msg; t.style.opacity = 1;
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.style.opacity = 0; }, 4000);
+}
+function readImage(file) {
+  return new Promise((ok, no) => {
+    if (!IMG_OK.includes(file.type)) return no(new Error('Format tidak didukung. Pakai JPG, PNG, atau WEBP.'));
+    if (file.size > IMG_MAX) return no(new Error('Ukuran gambar maksimal 8 MB.'));
+    const r = new FileReader();
+    r.onerror = () => no(new Error('Gagal membaca file.'));
+    r.onload = () => {
+      const img = new Image();
+      img.onerror = () => no(new Error('File bukan gambar yang valid.'));
+      img.onload = () => {
+        let w = img.naturalWidth, hh = img.naturalHeight, src = r.result;
+        const k = Math.min(1, IMG_SIDE / Math.max(w, hh));
+        if (k < 1) { // perkecil gambar raksasa supaya ringan, tetap tajam untuk export
+          const c = document.createElement('canvas'); c.width = Math.round(w * k); c.height = Math.round(hh * k);
+          c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+          src = c.toDataURL(file.type === 'image/png' ? 'image/png' : 'image/jpeg', 0.92); w = c.width; hh = c.height;
+        }
+        ok({ src, name: file.name, mime: file.type, size: file.size, width: w, height: hh });
+      };
+      img.src = r.result;
+    };
+    r.readAsDataURL(file);
+  });
+}
+function pickImage(cb) {
+  const f = h('input', '', null, { type: 'file', accept: '.jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp' });
+  f.onchange = () => { if (f.files[0]) readImage(f.files[0]).then(cb).catch(e => toast(e.message)); };
+  f.click();
+}
+const S = {
+  name: 'Falisha', avatar: null,
+  dateMode: 'today', date: ymd(new Date()), time: '21:02', delivered: true,
+  msgs: [
+    mk('recv', 'haii', '21:02', 'haha'),
+    mk('sent', 'haloo falisha', '21:04', 'love'),
+    mk('sent', 'kamu lagi dimanaa?', '21:04'),
+    mk('recv', 'di binus nih', '21:06')
+  ]
+};
+const RX = [['love', '❤️', 'Love'], ['like', '👍', 'Thumbs up'], ['dislike', '👎', 'Thumbs down'], ['haha', '😂', 'Haha'], ['exclaim', '‼️', 'Double exclamation'], ['question', '❓', 'Question mark']];
+const rxChar = k => (RX.find(r => r[0] === k) || [])[1];
+
+/* ---------- Helpers ---------- */
+function h(tag, cls, text, attrs) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text != null) e.textContent = text;
+  if (attrs) for (const k in attrs) e.setAttribute(k, attrs[k]);
+  return e;
+}
+const html = (tag, cls, inner) => { const e = h(tag, cls); e.innerHTML = inner; return e; };
+const fmtTime = d => d.getHours() + ':' + pad(d.getMinutes());
+const DAY = 864e5, GAP = 3 * 3600e3;
+
+function baseDate() {
+  let d = new Date();
+  if (S.dateMode === 'yesterday') d = new Date(Date.now() - DAY);
+  else if (S.dateMode === 'specific' && S.date) d = new Date(S.date + 'T00:00:00');
+  const [hh, mm] = (S.time || '0:0').split(':').map(Number);
+  d.setHours(hh || 0, mm || 0, 0, 0);
+  return d;
+}
+function dayLabel(d) {
+  const t = new Date(); t.setHours(0, 0, 0, 0);
+  const x = new Date(d); x.setHours(0, 0, 0, 0);
+  const diff = Math.round((x - t) / DAY);
+  if (diff === 0) return 'Today';
+  if (diff === -1) return 'Yesterday';
+  const o = { weekday: 'short', month: 'short', day: 'numeric' };
+  if (x.getFullYear() !== t.getFullYear()) o.year = 'numeric';
+  return x.toLocaleDateString('en-US', o);
+}
+// Waktu absolut tiap pesan; kalau jamnya lebih kecil dari pesan sebelumnya, dianggap hari berikutnya
+function timeline() {
+  const b = baseDate(), out = [];
+  S.msgs.forEach((m, i) => {
+    const [hh, mm] = (m.time || '0:0').split(':').map(Number);
+    let d = new Date(b); d.setHours(hh || 0, mm || 0, 0, 0);
+    if (i > 0) while (d < out[i - 1]) d = new Date(d.getTime() + DAY);
+    out.push(d);
+  });
+  return out;
+}
+
+/* ---------- Preview components ---------- */
+const ICON_SB = '<span class="ic"><svg width="18" height="12" viewBox="0 0 18 12"><rect y="8" width="3" height="4" rx="1"/><rect x="5" y="5.5" width="3" height="6.5" rx="1"/><rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" width="3" height="12" rx="1"/></svg><svg width="17" height="12" viewBox="0 0 17 12"><path d="M8.5 2.3c2.3 0 4.4.9 6 2.4l1-1.1A10.200 10.200 0 0 0 8.500.8C5.800.8 3.300 1.800 1.500 3.600l1 1.100a8.600 8.600 0 0 1 6-2.400zm0 3.600c1.400 0 2.700.5 3.700 1.400l1-1.100a7 7 0 0 0-9.400 0l1 1.100c1-.9 2.300-1.400 3.700-1.400zM8.500 9.400l2.100-2.100a3 3 0 0 0-4.200 0z"/></svg><svg width="27" height="13" viewBox="0 0 27 13"><rect x=".5" y=".5" width="23" height="12" rx="3.500" fill="none" stroke="#000" opacity=".4"/><rect x="2" y="2" width="20" height="9" rx="2"/><rect x="25" y="4.500" width="1.500" height="4" rx=".7" opacity=".45"/></svg></span>';
+const ICON_BACK = '<svg width="12" height="18" viewBox="0 0 12 18"><path d="M9.500 2 3 9l6.500 7" fill="none" stroke="#0b84fe" stroke-width="2.600" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const ICON_VID = '<svg width="22" height="16" viewBox="0 0 22 16"><rect x="1" y="1.500" width="14" height="13" rx="3.500" fill="none" stroke="#0b84fe" stroke-width="1.800"/><path d="M16.500 6.500 21 4v8l-4.500-2.500z" fill="#0b84fe"/></svg>';
+
+function Header() {
+  const hd = h('div', 'hd');
+  hd.append(html('div', 'circ back', ICON_BACK), html('div', 'circ vid', ICON_VID));
+  const av = h('div', 'av', S.avatar ? '' : (S.name.trim()[0] || '?').toUpperCase());
+  if (S.avatar) av.style.backgroundImage = 'url("' + S.avatar + '")';
+  hd.append(av, html('div', 'nm', ''));
+  hd.lastChild.append(document.createTextNode(S.name || 'Contact'), h('i', '', '›'));
+  return hd;
+}
+function Stamp(d) {
+  const s = h('div', 'stamp');
+  s.append(h('b', '', dayLabel(d)), document.createTextNode(' ' + fmtTime(d)));
+  return s;
+}
+function MessageBubble(m, o) {
+  const row = h('div', 'row ' + m.type);
+  row.style.marginTop = (o.first ? 10 : 2) + (m.reaction ? 12 : 0) + 'px';
+  let b;
+  if (m.kind === 'image') {
+    b = h('div', 'pic' + (m.image ? '' : ' empty'));
+    if (m.image) {
+      const im = h('img', '', null, { alt: '' });
+      im.style.maxWidth = '250px';
+      im.style.maxHeight = '330px';
+      im.style.width = 'auto';
+      im.style.height = 'auto';
+      im.src = m.image.src;
+      b.append(im);
+    } else b.textContent = 'No photo yet';
+  } else b = h('div', 'b' + (o.last ? ' tail' : ''), m.text || ' ');
+  if (m.reaction) b.append(h('span', 'rx', rxChar(m.reaction)));
+  row.append(b);
+  return row;
+}
+function ChatPreview() {
+  const p = document.getElementById('phone');
+  p.innerHTML = '';
+  p.append(html('div', 'sb', '<span>9:41</span>' + ICON_SB), Header());
+  const chat = h('div'); chat.id = 'chat';
+  const tl = timeline();
+  chat.append(Stamp(baseDate()));
+  const lastSent = S.msgs.map(m => m.type).lastIndexOf('sent');
+  S.msgs.forEach((m, i) => {
+    const stamped = i > 0 && tl[i] - tl[i - 1] > GAP;
+    if (stamped) chat.append(Stamp(tl[i]));
+    const nx = S.msgs[i + 1];
+    const first = i === 0 || S.msgs[i - 1].type !== m.type || stamped;
+    const last = !nx || nx.type !== m.type || nx.kind === 'image' || tl[i + 1] - tl[i] > GAP;
+    chat.append(MessageBubble(m, { first, last }));
+    if (S.delivered && i === lastSent) chat.append(h('div', 'dlv', 'Delivered'));
+  });
+  p.append(chat);
+  p.append(html('div', 'inp', '<div class="plus"><svg width="14" height="14" viewBox="0 0 14 14"><path d="M7 1v12M1 7h12" stroke="#8a8a8e" stroke-width="2" stroke-linecap="round"/></svg></div><div class="fld"><span>iMessage</span><svg width="12" height="18" viewBox="0 0 12 18"><rect x="3.500" y="1" width="5" height="9" rx="2.500" fill="#8a8a8e"/><path d="M1 8a5 5 0 0 0 10 0M6 13v3" fill="none" stroke="#8a8a8e" stroke-width="1.300" stroke-linecap="round"/></svg></div>'));
+  p.append(html('div', 'home', '<i></i>'));
+}
+
+/* ---------- Editor components ---------- */
+function update() { ChatPreview(); }          // perubahan ringan (ketik): hanya preview
+function refresh() { ChatEditor(); ChatPreview(); } // perubahan struktur: editor + preview
+
+function Field(label, input) {
+  const w = h('div'); w.append(h('label', 'f', label), input); return w;
+}
+function CharacterForm() {
+  const c = h('div', 'card');
+  const name = h('input', '', null, { type: 'text', placeholder: 'Nama karakter' });
+  name.value = S.name;
+  name.oninput = () => { S.name = name.value; update(); };
+  const file = h('input', '', null, { type: 'file', accept: 'image/*' });
+  file.style.display = 'none';
+  file.onchange = () => {
+    const f = file.files[0]; if (!f) return;
+    const r = new FileReader();
+    r.onload = () => { S.avatar = r.result; refresh(); };
+    r.readAsDataURL(f);
+  };
+  const row = h('div', 'avrow');
+  const av = h('div', 'av', S.avatar ? '' : (S.name.trim()[0] || '?').toUpperCase());
+  if (S.avatar) av.style.backgroundImage = 'url("' + S.avatar + '")';
+  const up = h('button', 'sm', 'Upload photo'); up.onclick = () => file.click();
+  row.append(av, up);
+  if (S.avatar) { const rm = h('button', 'sm', 'Remove'); rm.onclick = () => { S.avatar = null; refresh(); }; row.append(rm); }
+  c.append(Field('Character name', name), h('div', '', null), row, file);
+  c.children[1].style.height = '10px';
+  return c;
+}
+function DateTimeForm() {
+  const c = h('div', 'card');
+  const seg = h('div', 'seg');
+  [['today', 'Today'], ['yesterday', 'Yesterday'], ['specific', 'Specific date']].forEach(([k, t]) => {
+    const b = h('button', S.dateMode === k ? 'on' : '', t);
+    b.onclick = () => { S.dateMode = k; refresh(); };
+    seg.append(b);
+  });
+  const row = h('div', 'line');
+  row.style.marginTop = '10px';
+  if (S.dateMode === 'specific') {
+    const d = h('input', '', null, { type: 'date' }); d.value = S.date;
+    d.oninput = () => { S.date = d.value; update(); };
+    row.append(Field('Date', d));
+  }
+  const t = h('input', '', null, { type: 'time' }); t.value = S.time;
+  t.oninput = () => { S.time = t.value; update(); };
+  row.append(Field('Time (top of chat)', t));
+  const chk = h('label', 'chk');
+  const cb = h('input', '', null, { type: 'checkbox' }); cb.checked = S.delivered;
+  cb.onchange = () => { S.delivered = cb.checked; update(); };
+  chk.append(cb, document.createTextNode('Show "Delivered" under the last sent message'));
+  c.append(seg, row, chk);
+  return c;
+}
+function ReactionSelector(m) {
+  const w = h('div', 'rxs');
+  RX.forEach(([k, e, label]) => {
+    const b = h('button', m.reaction === k ? 'on' : '', e, { title: label, 'aria-label': label });
+    b.onclick = () => { m.reaction = m.reaction === k ? null : k; refresh(); };
+    w.append(b);
+  });
+  return w;
+}
+function ImageField(m) {
+  const w = h('div', 'imgf');
+  const th = h('div', 'th');
+  if (m.image) th.append(h('img', '', null, { src: m.image.src, alt: 'Photo preview' })); else th.textContent = 'No photo';
+  const info = h('div', 'info');
+  info.append(h('div', 'iname', m.image ? m.image.name : 'Belum ada foto'),
+    h('div', 'imeta', m.image ? Math.round(m.image.size / 1024) + ' KB · ' + m.image.width + '×' + m.image.height : 'JPG, PNG, WEBP · maks 8 MB'));
+  const btns = h('div', 'ibtn');
+  const rep = h('button', 'sm', m.image ? 'Replace photo' : 'Upload photo');
+  rep.onclick = () => pickImage(f => { m.image = f; refresh(); });
+  btns.append(rep);
+  if (m.image) { const rm = h('button', 'sm del', 'Remove photo'); rm.onclick = () => { m.image = null; refresh(); }; btns.append(rm); }
+  info.append(btns); w.append(th, info);
+  return w;
+}
+function MessageCard(m, i) {
+  const c = h('div', 'card');
+  const head = h('div', 'mh');
+  const seg = h('div', 'seg');
+  [['recv', 'Received'], ['sent', 'Sent']].forEach(([k, t]) => {
+    const b = h('button', m.type === k ? 'on' : '', t);
+    b.onclick = () => { m.type = k; refresh(); };
+    seg.append(b);
+  });
+  const time = h('input', '', null, { type: 'time', 'aria-label': 'Message time' }); time.value = m.time;
+  time.oninput = () => { m.time = time.value; update(); };
+  const up = h('button', 'sm', '↑', { title: 'Move up' }); up.disabled = i === 0;
+  up.onclick = () => { [S.msgs[i - 1], S.msgs[i]] = [S.msgs[i], S.msgs[i - 1]]; refresh(); };
+  const dn = h('button', 'sm', '↓', { title: 'Move down' }); dn.disabled = i === S.msgs.length - 1;
+  dn.onclick = () => { [S.msgs[i + 1], S.msgs[i]] = [S.msgs[i], S.msgs[i + 1]]; refresh(); };
+  const del = h('button', 'sm del', 'Delete', { title: 'Delete message' });
+  del.onclick = () => { S.msgs.splice(i, 1); refresh(); };
+  head.append(h('span', 'ix', String(i + 1)), seg, time, h('span', 'sp'), up, dn, del);
+  let body;
+  if (m.kind === 'image') body = ImageField(m);
+  else {
+    body = h('textarea', '', null, { placeholder: 'Isi pesan…' }); body.value = m.text;
+    body.oninput = () => { m.text = body.value; update(); };
+  }
+  c.append(head, body, ReactionSelector(m));
+  return c;
+}
+function MessageList() {
+  const w = h('div');
+  S.msgs.forEach((m, i) => w.append(MessageCard(m, i)));
+  if (!S.msgs.length) w.append(h('div', 'card', 'Belum ada pesan. Tambah dengan tombol di bawah.'));
+  return w;
+}
+function nextTime() {
+  const last = S.msgs[S.msgs.length - 1];
+  const [hh, mm] = (last ? last.time : S.time).split(':').map(Number);
+  const t = (hh * 60 + mm + 1) % 1440;
+  return pad(Math.floor(t / 60)) + ':' + pad(t % 60);
+}
+function ChatEditor() {
+  const e = document.getElementById('editor');
+  const keep = e.scrollTop;
+  e.innerHTML = '';
+  e.append(h('h2', '', 'Character'), CharacterForm(), h('h2', '', 'Conversation date & time'), DateTimeForm());
+  e.append(h('h2', '', 'Messages (' + S.msgs.length + ')'), MessageList());
+  const add = h('div', 'add');
+  [['recv', 'r', '+ Add Received'], ['sent', 's', '+ Add Sent']].forEach(([type, cls, t]) => {
+    const b = h('button', cls, t);
+    b.onclick = () => { S.msgs.push(mk(type, '', nextTime())); refresh(); const ta = e.querySelectorAll('textarea'); ta[ta.length - 1].focus(); e.scrollTop = e.scrollHeight; };
+    add.append(b);
+  });
+  const addP = h('div', 'add');
+  [['recv', 'p', '+ Add Photo Received'], ['sent', 'p', '+ Add Photo Sent']].forEach(([type, cls, t]) => {
+    const b = h('button', cls, t);
+    b.onclick = () => pickImage(f => { const m = mkImg(type, nextTime()); m.image = f; S.msgs.push(m); refresh(); e.scrollTop = e.scrollHeight; });
+    addP.append(b);
+  });
+  e.append(add, addP);
+
+  const saveRow = h('div', 'add');
+  const saveBtn = h('button', 's', 'Save Chat to My Chats');
+  saveBtn.onclick = saveCurrentChat;
+  saveRow.append(saveBtn);
+  e.append(saveRow);
+
+  const savedSection = h('div');
+  savedSection.style.marginTop = '22px';
+  const savedHead = h('div', 'line');
+  savedHead.style.justifyContent = 'space-between';
+  savedHead.append(h('h2', '', 'My Chats'));
+  const reloadBtn = h('button', 'sm fit', 'Refresh');
+  reloadBtn.onclick = () => renderSavedChats(savedSection);
+  savedHead.append(reloadBtn);
+  savedSection.append(savedHead);
+  e.append(savedSection);
+  renderSavedChats(savedSection);
+
+  e.scrollTop = keep;
+}
+
+/* ---------- API integration: Save / Load conversations ---------- */
+function dateForSave() {
+  return ymd(baseDate());
+}
+
+async function uploadDataUrl(dataUrl, filename) {
+  if (!dataUrl || !dataUrl.startsWith('data:')) return dataUrl || null;
+  const blob = await (await fetch(dataUrl)).blob();
+  const form = new FormData();
+  form.append('file', blob, filename || 'chat-image.jpg');
+  const response = await fetch('/api/uploads', { method: 'POST', body: form });
+  const result = await response.json();
+  if (!response.ok || !result.success) throw new Error(result.message || 'Upload gambar gagal');
+  return result.path;
+}
+
+async function saveCurrentChat() {
+  const btn = [...document.querySelectorAll('#editor button')].find(b => b.textContent === 'Save Chat to My Chats');
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+  try {
+    const avatarPath = await uploadDataUrl(S.avatar, 'avatar.jpg');
+    if (avatarPath) S.avatar = avatarPath;
+    const messages = [];
+    for (const m of S.msgs) {
+      let imagePath = null;
+      if (m.kind === 'image' && m.image && m.image.src) {
+        imagePath = await uploadDataUrl(m.image.src, m.image.name || 'chat-image.jpg');
+        if (imagePath) m.image.src = imagePath;
+      }
+      messages.push({
+        sender: m.type === 'recv' ? 'received' : 'sent',
+        message_type: m.kind || 'text',
+        content: m.kind === 'image' ? null : m.text,
+        image_path: imagePath,
+        sent_at: m.time,
+        reaction: m.reaction
+      });
+    }
+    const payload = {
+      character_name: S.name,
+      avatar_path: avatarPath,
+      conversation_date: dateForSave(),
+      start_time: S.time,
+      delivered: S.delivered,
+      messages
+    };
+    const response = await fetch('/api/conversations', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const result = await response.json();
+    if (!response.ok || !result.success) throw new Error(result.message || 'Gagal menyimpan chat');
+    toast('Chat berhasil disimpan ke My Chats!');
+    const savedList = document.querySelector('#editor .saved-list');
+    if (savedList) renderSavedChats(savedList.parentElement);
+  } catch (err) {
+    toast('Gagal menyimpan: ' + err.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Save Chat to My Chats'; }
+  }
+}
+
+async function renderSavedChats(section) {
+  let list = section.querySelector('.saved-list');
+  if (!list) { list = h('div', 'saved-list'); section.append(list); }
+  list.innerHTML = '';
+  list.append(h('div', 'imeta', 'Loading saved conversations…'));
+  try {
+    const response = await fetch('/api/conversations');
+    const result = await response.json();
+    if (!response.ok || !result.success) throw new Error(result.message || 'Gagal mengambil daftar chat');
+    list.innerHTML = '';
+    if (!result.data.length) {
+      list.append(h('div', 'card', 'Belum ada percakapan yang disimpan.'));
+      return;
+    }
+    result.data.forEach(conv => {
+      const item = h('div', 'saved-item');
+      const meta = h('div', 'meta');
+      meta.append(h('strong', '', conv.character_name), h('small', '', (conv.conversation_date || '') + ' · ' + (conv.messages || []).length + ' messages'));
+      const actions = h('div', 'ibtn');
+      const load = h('button', 'sm', 'Load');
+      load.onclick = () => loadConversation(conv);
+      const remove = h('button', 'sm del', 'Delete');
+      remove.onclick = async () => {
+        if (!window.confirm('Hapus percakapan ' + conv.character_name + '?')) return;
+        remove.disabled = true;
+        try {
+          const delResponse = await fetch('/api/conversations/' + conv.id, { method: 'DELETE' });
+          const delResult = await delResponse.json();
+          if (!delResponse.ok || !delResult.success) throw new Error(delResult.message || 'Gagal menghapus percakapan');
+          toast('Percakapan berhasil dihapus.');
+          renderSavedChats(section);
+        } catch (err) {
+          toast('Gagal menghapus: ' + err.message);
+          remove.disabled = false;
+        }
+      };
+      actions.append(load, remove);
+      item.append(meta, actions);
+      list.append(item);
+    });
+  } catch (err) {
+    list.innerHTML = '';
+    list.append(h('div', 'card', 'Tidak dapat memuat My Chats: ' + err.message));
+  }
+}
+
+function loadConversation(conv) {
+  S.name = conv.character_name || 'Contact';
+  S.avatar = conv.avatar_path || null;
+  S.date = conv.conversation_date || ymd(new Date());
+  const today = ymd(new Date());
+  const yesterday = ymd(new Date(Date.now() - DAY));
+  S.dateMode = S.date === today ? 'today' : (S.date === yesterday ? 'yesterday' : 'specific');
+  S.time = conv.start_time || '21:02';
+  S.delivered = !!conv.delivered;
+  S.msgs = (conv.messages || []).map(m => ({
+    id: ++uid,
+    type: m.sender === 'received' ? 'recv' : 'sent',
+    kind: m.message_type || 'text',
+    text: m.content || '',
+    time: m.sent_at || S.time,
+    reaction: m.reaction || null,
+    image: m.message_type === 'image' && m.image_path ? {
+      src: m.image_path, name: 'Saved image', mime: 'image/jpeg', size: 0, width: 250, height: 200
+    } : null
+  }));
+  refresh();
+  toast('Percakapan ' + S.name + ' berhasil dimuat.');
+}
+
+/* ---------- Export PNG ---------- */
+document.getElementById('dl').onclick = async function () {
+  const btn = this;
+  if (typeof html2canvas === 'undefined') { alert('Library export gagal dimuat. Cek koneksi lalu muat ulang halaman.'); return; }
+  btn.disabled = true; btn.textContent = 'Rendering…';
+  try {
+    if (document.fonts && document.fonts.ready) await document.fonts.ready;
+    const el = document.getElementById('phone');
+    // pastikan semua foto sudah selesai di-decode sebelum dirender ke PNG
+    await Promise.all([...el.querySelectorAll('img')].map(i => (i.decode ? i.decode().catch(() => {}) : Promise.resolve())));
+    const canvas = await html2canvas(el, { scale: 3, backgroundColor: '#ffffff', useCORS: true, logging: false });
+    const a = document.createElement('a');
+    a.download = 'au-chat-' + (S.name || 'chat').trim().replace(/\s+/g, '-').toLowerCase() + '.png';
+    a.href = canvas.toDataURL('image/png');
+    document.body.appendChild(a); a.click(); a.remove();
+  } catch (err) {
+    alert('Export gagal: ' + err.message);
+  }
+  btn.disabled = false; btn.textContent = 'Download PNG';
+};
+
+refresh();
+</script>
+</body>
+</html>
